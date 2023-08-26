@@ -12,9 +12,9 @@ Currently we are tracking these events:
 
 - Burn
 """
-import logging
 import csv
 import datetime
+import logging
 from pathlib import Path
 
 from requests.adapters import HTTPAdapter
@@ -23,11 +23,12 @@ from web3 import Web3
 
 from eth_defi.abi import get_contract
 from eth_defi.event_reader.conversion import (
+    convert_int256_bytes_to_int,
+    convert_jsonrpc_value_to_int,
     convert_uint256_bytes_to_address,
     convert_uint256_string_to_address,
     convert_uint256_string_to_int,
     decode_data,
-    convert_int256_bytes_to_int,
 )
 from eth_defi.event_reader.logresult import LogContext
 from eth_defi.event_reader.reader import LogResult, read_events_concurrent
@@ -36,7 +37,6 @@ from eth_defi.event_reader.web3factory import TunedWeb3Factory
 from eth_defi.event_reader.web3worker import create_thread_pool_executor
 from eth_defi.token import TokenDetails, fetch_erc20_details
 from eth_defi.uniswap_v3.constants import UNISWAP_V3_FACTORY_CREATED_AT_BLOCK
-
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def _decode_base(log: LogResult) -> dict:
     block_time = datetime.datetime.utcfromtimestamp(log["timestamp"])
 
     return {
-        "block_number": int(log["blockNumber"], 16),
+        "block_number": convert_jsonrpc_value_to_int(log["blockNumber"]),
         "timestamp": block_time.isoformat(),
         "tx_hash": log["transactionHash"],
         "log_index": int(log["logIndex"], 16),

@@ -60,6 +60,7 @@ def convert_to_ohlcv_candles(
         df[timestamp_index_column] = pd.to_datetime(df[timestamp_index_column])
         df = df.set_index(timestamp_index_column, drop=False)
 
+    df[price_column] = df[price_column].astype(float)
     candles = df[price_column].resample(time_bucket).ohlc(_method="ohlc")
     candles["volume"] = df[value_column].resample(time_bucket).sum()
     return candles
