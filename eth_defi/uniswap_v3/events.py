@@ -81,7 +81,7 @@ def decode_pool_created(log: LogResult) -> dict:
         );
     """
     # Do additional lookup for the token data
-    web3 = log["event"].web3
+    web3 = log["event"].w3
     token_cache: TokenCache = log["context"]
     result = _decode_base(log)
 
