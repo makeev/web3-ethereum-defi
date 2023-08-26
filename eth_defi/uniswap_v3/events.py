@@ -298,6 +298,8 @@ def fetch_events_to_csv(
     output_folder: str = "/tmp",
     max_workers: int = 16,
     log_info=print,
+    events_filter: list | None = None,
+    pool_address_filter: list | None = None,
 ):
     """Fetch all tracked Uniswap v3 events to CSV files for notebook analysis.
 
@@ -339,7 +341,10 @@ def fetch_events_to_csv(
     web3 = web3_factory(token_cache)
     executor = create_thread_pool_executor(web3_factory, token_cache, max_workers=max_workers)
     event_mapping = get_event_mapping(web3)
-    contract_events = [event_data["contract_event"] for event_data in event_mapping.values()]
+    if events_filter:
+        contract_events = [event_mapping[event_name]["contract_event"] for event_name in events_filter]
+    else:
+        contract_events = [event_data["contract_event"] for event_data in event_mapping.values()]
 
     # Start scanning
     restored, restored_start_block = state.restore_state(start_block)
@@ -358,6 +363,9 @@ def fetch_events_to_csv(
     buffers = {}
 
     for event_name, mapping in event_mapping.items():
+        if events_filter and event_name not in events_filter:
+            continue
+
         file_path = f"{output_folder}/uniswap-v3-{event_name.lower()}.csv"
         exists_already = Path(file_path).exists()
         file_handler = open(file_path, "a", encoding="utf-8")
@@ -427,6 +435,12 @@ def fetch_events_to_csv(
             try:
                 # write to correct buffer
                 event_name = log_result["event"].event_name
+                if events_filter and event_name not in events_filter:
+                    continue
+
+                if pool_address_filter and log_result["address"].lower() not in pool_address_filter:
+                    continue
+
                 buffer = buffers[event_name]["buffer"]
                 decode_function = event_mapping[event_name]["decode_function"]
 
